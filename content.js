@@ -1,76 +1,66 @@
-runSpellCheck();
+//TODO check alt text for spelling errors
+//TODO check for and remove numbers from array
+//TODO check if removing S makes it valid word
 
-//Run on page load if setting selected
-function runSpellCheck(){
-    chrome.storage.sync.get(["Toggle"], function(items){
-        if(items.upgradeBrowserToggle === true || items.upgradeBrowserToggle === "true"){
-            //Do something
-        }
-    });
-}
-
-//Runs when "Run Spell Check" button is clicked
 chrome.runtime.onMessage.addListener(
-    function(request, sender, sendResponse) {
-        //TODO make spell check happen
-        var popupArrayResponse = [];
+    async function(request, sender, sendResponse) {
+        console.log("recieved message");
 
+        var textString = document.body.innerText;
+        var textList = stringToUpperWordArray(textString);
+        var dictionaryURL = chrome.runtime.getURL("dictionary.json")
+        var wrongWordArray = [];
+        var wrongAltWordArray = [];
         var imageArray = document.getElementsByTagName("img");
-        
+        var imageAltTextArray = []
 
+        for(var i = 0; i < imageArray.length; i++){
+            
+            var imageAltText = imageArray[i].alt;
+            if(imageAltText != ""){
+                imageAltTextArray.push(imageAltText);
+            }
+        }
+
+        var dictionaryJSON = await fetch(dictionaryURL)
+            .then((response) => response.json())
+            .then((json) => {return json});
+
+        for(var i = 0; i < textList.length; i++){
+            if(!dictionaryJSON[textList[i]]){
+                wrongWordArray.push({
+                    index: i,
+                    word: textList[i]
+                });
+            }
+        }
+
+        console.log(wrongWordArray)
+        
         chrome.runtime.sendMessage({ 
             action: "show", 
-            imgsArray: popupArrayResponse
+            pageText: wrongWordArray,
+            altText: wrongAltWordArray
         });
-        
-        return true;
     }
 );
 
-function formatArray(array){
-    //remove duplicate urls from different sources
-    if(!array || array.length < 1){
-        return [];
+function splitSentenceArray(sentenceArray){
+    var wordObjectArray = []
+    for(var i = 0; i < sentenceArray.length; i++){
+        var splitSentence = stringToUpperWordArray(sentenceArray[i])
+        wordObjectArray.push(splitSentence);
     }
 
-    var uniqueArray = [];
-    for(var j = 0; j < array.length; j++){
-        if(uniqueArray.indexOf(array[j]) == -1){
-            uniqueArray.push(array[j])
-        }
-    }
-
-    //remove undefined's
-    uniqueArray = uniqueArray.filter(function( element ) {
-        if(element == undefined){
-            return false;
-        }
-
-        if(element.trim() === ""){
-            return false;
-        }
-
-        if(element.includes("data:image/")){
-            return false;
-        }
-
-        if(element.includes(".woff2") || element.includes(".woff")){
-            return false;
-        }
-
-        return true;
-    });
-
-    return uniqueArray;
+    return wordObjectArray;
 }
 
-function removeURLParameters(url){
-    if(url){
-        if(url.indexOf('?') > 0){
-            return url.substring(0, url.indexOf('?'))
-        }
+function stringToUpperWordArray(string){
+    var stringArray = string.match(/\b(\w+)\b/g);
+
+    for(var i = 0; i < stringArray.length; i++){
+        stringArray[i] = stringArray[i].toUpperCase()
     }
-    else {
-        return null
-    }
+
+    return stringArray
 }
