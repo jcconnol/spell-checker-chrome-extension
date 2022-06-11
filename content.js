@@ -4,21 +4,18 @@
 
 chrome.runtime.onMessage.addListener(
     async function(request, sender, sendResponse) {
-        console.log("recieved message");
 
         var textString = document.body.innerText;
         var textList = stringToUpperWordArray(textString);
         var dictionaryURL = chrome.runtime.getURL("dictionary.json")
-        var wrongWordArray = [];
-        var wrongAltWordArray = [];
         var imageArray = document.getElementsByTagName("img");
-        var imageAltTextArray = []
+        var imageAltTextArray = [];
+        var imageAltTextString = "";
 
         for(var i = 0; i < imageArray.length; i++){
-            
             var imageAltText = imageArray[i].alt;
             if(imageAltText != ""){
-                imageAltTextArray.push(imageAltText);
+                imageAltTextString += " " + imageAltText;
             }
         }
 
@@ -26,17 +23,12 @@ chrome.runtime.onMessage.addListener(
             .then((response) => response.json())
             .then((json) => {return json});
 
-        for(var i = 0; i < textList.length; i++){
-            if(!dictionaryJSON[textList[i]]){
-                wrongWordArray.push({
-                    index: i,
-                    word: textList[i]
-                });
-            }
-        }
-
-        console.log(wrongWordArray)
+        var altTextWordArray = []//stringToUpperWordArray(imageAltTextString);
+        var textWordArray = stringToUpperWordArray(textString)
         
+        var wrongAltWordArray = []//getWrongWordArray(altTextWordArray, dictionaryJSON);
+        var wrongWordArray = getWrongWordArray(textWordArray, dictionaryJSON);
+       
         chrome.runtime.sendMessage({ 
             action: "show", 
             pageText: wrongWordArray,
@@ -45,22 +37,32 @@ chrome.runtime.onMessage.addListener(
     }
 );
 
-function splitSentenceArray(sentenceArray){
-    var wordObjectArray = []
-    for(var i = 0; i < sentenceArray.length; i++){
-        var splitSentence = stringToUpperWordArray(sentenceArray[i])
-        wordObjectArray.push(splitSentence);
-    }
-
-    return wordObjectArray;
-}
-
-function stringToUpperWordArray(string){
-    var stringArray = string.match(/\b(\w+)\b/g);
+function stringToUpperWordArray(incoming_string){
+    var stringArray = incoming_string.match(/\b(\w+)\b/g);
 
     for(var i = 0; i < stringArray.length; i++){
         stringArray[i] = stringArray[i].toUpperCase()
     }
 
     return stringArray
+}
+
+function getWrongWordArray(wordArray, dictionary){
+    wordArray.push("asdf.123")
+    wordArray.push("123asdf")
+    console.log(wordArray)
+    var wrongWordArray = []
+    for(var i = 0; i < wordArray.length; i++){
+        if(dictionary[wordArray[i]] != "1" && !hasNum(wordArray[i])){
+            wrongWordArray.push(wordArray[i])
+        }
+    }
+
+    console.log(wrongWordArray)
+
+    return wrongWordArray
+}
+
+function hasNum(string){
+    return /\d/.test(string);
 }

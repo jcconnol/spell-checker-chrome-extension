@@ -1,3 +1,9 @@
+//TODO make spell check functionality
+//TODO make toggle for alt text
+//TODO make toggle to show on popup 
+//TODO make toggle to highlight on page
+//TODO make to where person can add words to be excluded from dictionary
+
 var numericRegExp = new RegExp('^((?:NaN|-?(?:(?:\\d+|\\d*\\.\\d+)(?:[E|e][+|-]?\\d+)?|Infinity)))$')
 
 document.addEventListener('DOMContentLoaded', function() {
