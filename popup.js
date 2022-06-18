@@ -1,4 +1,3 @@
-//TODO make spell check functionality
 //TODO make toggle for alt text
 //TODO make toggle to show on popup 
 //TODO make toggle to highlight on page
@@ -8,144 +7,129 @@ var numericRegExp = new RegExp('^((?:NaN|-?(?:(?:\\d+|\\d*\\.\\d+)(?:[E|e][+|-]?
 
 document.addEventListener('DOMContentLoaded', function() {
     chrome.storage.sync.get(["pageObject"], async function(result) {
-        var getImageInfoButton = document.getElementsByClassName('get-image-info-button')[0];
+        var getSpellCheckButton = document.getElementsByClassName('run-spell-check-button')[0];
 
         var currentURL = null;
 
         chrome.tabs.query({active: true, currentWindow: true}, function(tabs){
             currentURL = tabs[0].url;
 
-            if(result.pageObject && result.pageObject.imageArray.length > 0 && currentURL == result.pageObject.url){
-                var imageTable = buildTableFromData(result.pageObject.imageArray);
+            if(result.pageObject && result.pageObject.textArray.length > 0 && currentURL == result.pageObject.url){
+                var wordTable = buildTableFromData(result.pageObject.textArray);
 
-                document.getElementById("image-list-container").innerHTML = imageTable;
+                document.getElementById("spell-check-list-container").innerHTML = wordTable;
 
                 initSortTable(document.querySelector('table'))
 
-                getImageInfoButton.disabled = false;
+                getSpellCheckButton.disabled = false;
             }
         });
+    });
+
+    //Settings storage retrieval
+    chrome.storage.sync.get([
+        "showTable",
+        "pageUnderline",
+        "includeAltText"
+    ], function(items){
+        document.getElementsByClassName('show-table')[0].checked = items.showTable;
+        document.getElementsByClassName('page-underline')[0].checked = items.pageUnderline;
+        document.getElementsByClassName('include-alt-text')[0].checked = items.includeAltText;
+    });
+
+    $('.switch #setting-switch').click(function(event) {
+        var inputClicked = event.target;
+        var key = null;
+        var value = event.target.checked;    
+
+        if(inputClicked.matches(".show-table")){
+            key = "showTable";
+        }
+        else if(inputClicked.matches(".include-alt-text")){
+            key = "includeAltText";
+        }
+        else if(inputClicked.matches(".page-underline")){
+            key = "pageUnderline";
+        }
+        
+        if(key){
+            chrome.storage.sync.set({
+                [key]: value
+            });
+        }
     });
 });
 
 window.addEventListener('load', function(event){
-    var getImageInfoButton = document.getElementsByClassName('get-image-info-button')[0]
-    getImageInfoButton.addEventListener("click", 
+    var runSpellCheckButton = document.getElementsByClassName('run-spell-check-button')[0]
+    runSpellCheckButton.addEventListener("click", 
         function(){ 
-            console.log("started...")
             var messageTo = {
                 subject: "DOMInfo",
                 from: "imgs"
             }
         
             chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
-                console.log("sending")
                 chrome.tabs.sendMessage(tabs[0].id, messageTo);
-                console.log("sent")
             });
         });
 });
 
 chrome.runtime.onMessage.addListener(
     async function(request, sender) {
-        console.log("pop up message received")
-        console.log(request)
-
-        var getImageInfoButton = document.getElementsByClassName('get-image-info-button')[0];
+        var runSpellCheckButton = document.getElementsByClassName('run-spell-check-button')[0];
 
         if(sender.tab.active === true){
-            getImageInfoButton.disabled = true;
+            runSpellCheckButton.disabled = true;
 
             var progressBar = document.getElementById("inner-prog-bar");            
 
             var textData = request.pageText
-            var altTextData = request.altText
+            //var altTextData = request.altText
 
-            // for(var i = 0; i < imageData.length; i++){
-            //     var progressWidth = (i/(imageData.length))*100;
-            //     progressWidth = Math.ceil(progressWidth);
+            for(var i = 0; i < textData.length; i++){
+                var progressWidth = (i/(textData.length))*100;
+                progressWidth = Math.ceil(progressWidth);
 
-            //     if(i === (imageData.length-1)){
-            //         progressWidth = 100;
-            //     }
+                if(i === (textData.length-1)){
+                    progressWidth = 100;
+                }
 
-            //     progressBar.style.width = progressWidth + '%'; 
-            //     progressBar.innerHTML = progressWidth * 1  + '%';
+                progressBar.style.width = progressWidth + '%'; 
+                progressBar.innerHTML = progressWidth * 1  + '%';
 
-            //     var value = imageData[i];
+                var value = textData[i];
+            }
 
-            //     if(value.url.substring(0, 4) !== "data"){
-                    
-            //         //image grabbing with get call
-            //         await fetch(value.url)
-            //             .then(response => {
+            //sort data array by size
+            var sortedTextData = textData.sort();
 
-            //                 //SVGs are returned as readable stream, handled in next "then"
-            //                 if(value.url.includes(".svg")){
-            //                     return response.text();
-            //                 }
-
-            //                 var responseSize = response.headers.get("content-length")/1024;
-            //                 responseSize = Math.ceil(responseSize);
-                            
-            //                 if(!isNaN(responseSize)){
-            //                     imageData[i].size = responseSize;
-
-            //                     if(responseSize < 1){
-            //                         imageData[i].size = 0;
-            //                     }
-            //                 }
-
-            //             }).then(function(data) {
-
-            //                 //SVG handling, comes in as text
-            //                 if(value.url.includes(".svg")){
-            //                     var svgSize = new Blob([data]).size / 1024;
-            //                     svgSize = Math.ceil(svgSize);
-            //                     imageData[i].size = svgSize;
-            //                 }
-            //             })
-            //             .catch(error => {
-            //                 console.log(error);
-            //             });
-            //     }
-
-            //     if(imageData[i].size == null){
-            //         imageData[i].size = -1;
-            //     }
-            // }
-
-            // //sort data array by size
-            // var sortedImageData = imageData.sort((a, b) => parseInt(b.size) - parseInt(a.size));
-
-            // await chrome.tabs.query({active: true, currentWindow: true}, async function(tabs){   
-            //     var currentURL = tabs[0].url;
+            await chrome.tabs.query({active: true, currentWindow: true}, async function(tabs){   
+                var currentURL = tabs[0].url;
                 
-            //     var pageObject = {
-            //         "imageArray": sortedImageData,
-            //         "url": currentURL
-            //     }
+                var pageObject = {
+                    "textArray": sortedTextData,
+                    "url": currentURL
+                }
 
-            //     chrome.storage.sync.set({"pageObject": pageObject}, function() {
-            //         var imageTable = buildTableFromData(sortedImageData);
-            //         document.getElementById("image-list-container").innerHTML = imageTable;
+                chrome.storage.sync.set({"pageObject": pageObject}, function() {
+                    var wordTable = buildTableFromData(sortedTextData);
+                    document.getElementById("spell-check-list-container").innerHTML = wordTable;
 
-            //         initSortTable(document.querySelector('table'));
+                    initSortTable(document.querySelector('table'));
 
-            //         getImageInfoButton.disabled = false;
-            //     });
-            // });
+                    runSpellCheckButton.disabled = false;
+                });
+            });
         }
     }
 );
 
 function sendMessage(){
 
-    console.log("started...")
+    var runSpellCheckButton = document.getElementsByClassName('run-spell-check-button')[0];
 
-    var getImageInfoButton = document.getElementsByClassName('get-image-info-button')[0];
-
-    getImageInfoButton.disabled = true;
+    runSpellCheckButton.disabled = true;
 
     var params = {
         active: true,
@@ -165,22 +149,17 @@ function sendMessage(){
 function buildTableFromData(tableArray){
     var buildTable = "<table><thead><tr class=\"image-table-header\">";
     buildTable += `<th class="sorting"></th>`;
-    buildTable += `<th class="sorting">URL</th>`;
-    buildTable += `<th class="sorting">Size (kb)</th>`;
+    buildTable += `<th class="sorting">Misspelling</th>`;
+    buildTable += `<th class="sorting">Occurrences</th>`;
     buildTable += "</tr></thead><tbody><tr>";
 
     for(var i = 0; i < tableArray.length; i++){
-        var value = tableArray[i];
+        var value = tableArray[i].word;
+        var occurance = tableArray[i].count; 
 
         buildTable += `<td>${i+1}</td>`;
-        buildTable += `<td>${value.url}</td>`;
-
-        if(value.size > 0 && value.size){
-            buildTable += `<td>${value.size}</td>`;
-        }
-        else{
-            buildTable += `<td> error</td>`;
-        }
+        buildTable += `<td>${value}</td>`;
+        buildTable += `<td>${occurance}</td>`;
 
         if ((i+1) < buildTable.length) { 
             buildTable += "</tr><tr>";
@@ -213,7 +192,6 @@ function toArray (value) {
 }
 
 function sortTable (table, ordering) {
-    console.log("first table")
     var thead = table.querySelector('thead')
     var tbody = table.querySelector('tbody')
     var rows = toArray(tbody.rows)

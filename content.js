@@ -22,11 +22,14 @@ chrome.runtime.onMessage.addListener(
         var dictionaryJSON = await fetch(dictionaryURL)
             .then((response) => response.json())
             .then((json) => {return json});
+        
+        // if(spellCheckAltText){
 
-        var altTextWordArray = []//stringToUpperWordArray(imageAltTextString);
+        // }
+        var altTextWordArray = []
         var textWordArray = stringToUpperWordArray(textString)
         
-        var wrongAltWordArray = []//getWrongWordArray(altTextWordArray, dictionaryJSON);
+        var wrongAltWordArray = []
         var wrongWordArray = getWrongWordArray(textWordArray, dictionaryJSON);
        
         chrome.runtime.sendMessage({ 
@@ -48,9 +51,6 @@ function stringToUpperWordArray(incoming_string){
 }
 
 function getWrongWordArray(wordArray, dictionary){
-    wordArray.push("asdf.123")
-    wordArray.push("123asdf")
-    console.log(wordArray)
     var wrongWordArray = []
     for(var i = 0; i < wordArray.length; i++){
         if(dictionary[wordArray[i]] != "1" && !hasNum(wordArray[i])){
@@ -58,9 +58,30 @@ function getWrongWordArray(wordArray, dictionary){
         }
     }
 
-    console.log(wrongWordArray)
+    var wrongWordObj = arrayToOccurancesObj(wrongWordArray)
 
-    return wrongWordArray
+    return wrongWordObj
+}
+
+function arrayToOccurancesObj(duplicatesArray){
+    // [what, what] To [{what:2}]
+
+    var countsObj = {};
+
+    for (var num of duplicatesArray) {
+        countsObj[num] = countsObj[num] ? countsObj[num] + 1 : 1;
+    }
+
+    var countsArray = [];
+    for (var key in countsObj) {
+        countsArray.push({
+            "word": key,
+            "count": countsObj[key]
+        });
+    }
+
+    console.log(countsArray)
+    return countsArray
 }
 
 function hasNum(string){

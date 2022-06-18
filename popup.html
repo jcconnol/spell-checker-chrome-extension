@@ -9,31 +9,51 @@
   </head>
   <body>
     <div id="header">
-      <img src="images/imageSizer.png" class="image-sizer-logo" />
-      <h1>Image Size Lister</h1>
+      <img src="images/icon2.png" class="spell-checker-logo" />
+      <h1>Spell Checker</h1>
       <hr>
     </div>
     
-    <h3>Click Start below to see a list of images on this site. 
+    <h3>Click Start below to see a list of misspelled words on this site. 
       <br />
-      Then choose to sort the list by size and see the images and their sizes.</h3>
+      Then choose to sort the list by words or number of occurrences.</h3>
     <p>
       <div class="interaction-container">
-        <button class="get-image-info-button">
-          Start Image Sizing
+        <button class="run-spell-check-button">
+          Start Spell Checking
         </button>
         <div id="progress-bar">
           <div id="inner-prog-bar"> 1%</div>
         </div>
       </div>
     </p>
-    <div id="image-list-container"></div>
+    <div class="setting-list">
+      <p>Show in table: 
+          <label class="switch">
+              <input id="setting-switch" type="checkbox" class="show-table" checked>
+              <span class="slider round"></span>
+          </label>
+      </p>
+      <p>Underline on page: 
+        <label class="switch">
+            <input id="setting-switch" type="checkbox" class="page-underline" checked>
+            <span class="slider round"></span>
+        </label>
+      </p>
+      <p>Include Alt text: 
+        <label class="switch">
+            <input id="setting-switch" type="checkbox" class="include-alt-text">
+            <span class="slider round"></span>
+        </label>
+      </p>
+    </div>
+    <div id="spell-check-list-container"></div>
     <footer>
       <hr>
       <div class="footer-helper">
-        <span><a name="newtab" href="https://github.com/jcconnol/site-image-sizer-chrome-extension/blob/main/README.md">Need Help?</a></span>
-        <span><a name="newtab" href="https://github.com/jcconnol/site-image-sizer-chrome-extension/issues">Found an Issue?</a></span>
-        <span><a name="newtab" href="https://github.com/jcconnol/site-image-sizer-chrome-extension">See the Code!</a></span>
+        <span><a name="newtab" href="https://github.com/jcconnol/spell-checker-chrome-extension/blob/main/README.md">Need Help?</a></span>
+        <span><a name="newtab" href="https://github.com/jcconnol/spell-checker-chrome-extension/issues">Found an Issue?</a></span>
+        <span><a name="newtab" href="https://github.com/jcconnol/spell-checker-chrome-extension">See the Code!</a></span>
       </div>
       <div>Created By John Connolly</div>
     </footer>
