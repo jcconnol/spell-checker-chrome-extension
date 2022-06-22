@@ -1,4 +1,3 @@
-//TODO make toggle for alt text
 //TODO make toggle to show on popup 
 //TODO make toggle to highlight on page
 //TODO make to where person can add words to be excluded from dictionary
@@ -14,13 +13,18 @@ document.addEventListener('DOMContentLoaded', function() {
         chrome.tabs.query({active: true, currentWindow: true}, function(tabs){
             currentURL = tabs[0].url;
 
-            if(result.pageObject && result.pageObject.textArray.length > 0 && currentURL == result.pageObject.url){
-                var wordTable = buildTableFromData(result.pageObject.textArray);
+            if(result.pageObject && currentURL == result.pageObject.url){
+                if(result.pageObject.textArray.length > 0) {
+                    var wordTable = buildTableFromData(result.pageObject.textArray, "spell-check-text-container");
+                    document.getElementById("spell-check-text-container").innerHTML = wordTable;
+                }
 
-                document.getElementById("spell-check-list-container").innerHTML = wordTable;
-
-                initSortTable(document.querySelector('table'))
-
+                if(result.pageObject.altText > 0) {
+                    var altTextTable = buildTableFromData(result.pageObject.altText, "spell-check-alt-container");
+                    document.getElementById("spell-check-alt-container").innerHTML = altTextTable;
+                }
+                
+                initSortTable(document.querySelector('table'));
                 getSpellCheckButton.disabled = false;
             }
         });
@@ -85,38 +89,53 @@ chrome.runtime.onMessage.addListener(
             var progressBar = document.getElementById("inner-prog-bar");            
 
             var textData = request.pageText
-            //var altTextData = request.altText
+            var altTextData = request.altText
+            var totalDataLength = altTextData.length + textData.length
 
-            for(var i = 0; i < textData.length; i++){
-                var progressWidth = (i/(textData.length))*100;
+            for(var i = 0; i < totalDataLength; i++){
+                var progressWidth = (i/(totalDataLength))*100;
                 progressWidth = Math.ceil(progressWidth);
 
-                if(i === (textData.length-1)){
+                if(i === (totalDataLength-1)){
                     progressWidth = 100;
                 }
 
                 progressBar.style.width = progressWidth + '%'; 
                 progressBar.innerHTML = progressWidth * 1  + '%';
-
-                var value = textData[i];
             }
 
-            //sort data array by size
+            //TODO add if for altTextData
             var sortedTextData = textData.sort();
+            var sortedAltData = altTextData.sort();
+
+            console.log(sortedAltData)
 
             await chrome.tabs.query({active: true, currentWindow: true}, async function(tabs){   
                 var currentURL = tabs[0].url;
                 
+                //TODO add if for altTextData
                 var pageObject = {
                     "textArray": sortedTextData,
+                    "altArray": sortedAltData,
                     "url": currentURL
                 }
 
                 chrome.storage.sync.set({"pageObject": pageObject}, function() {
-                    var wordTable = buildTableFromData(sortedTextData);
-                    document.getElementById("spell-check-list-container").innerHTML = wordTable;
+                    //add altText get and make another table
+                    var wordTable = buildTableFromData(sortedTextData, "spell-check-text-container");
+                    document.getElementById("spell-check-text-container").innerHTML = wordTable;
+                    console.log(sortedAltData)
+                    if(sortedAltData.length > 0){
+                        var altWordTable = buildTableFromData(sortedAltData, "spell-check-alt-container");
+                        document.getElementById("spell-check-alt-container").innerHTML = altWordTable;
+                        document.getElementById("spell-check-alt-container").style.display = "block";
+                    }
+                    else{
+                        document.getElementById("spell-check-alt-container").style.display = "none";
+                    }
 
-                    initSortTable(document.querySelector('table'));
+                    initSortTable(document.getElementById('spell-check-text-container'));
+                    initSortTable(document.getElementById('spell-check-alt-container'));
 
                     runSpellCheckButton.disabled = false;
                 });
@@ -146,12 +165,12 @@ function sendMessage(){
     });
 }
 
-function buildTableFromData(tableArray){
-    var buildTable = "<table><thead><tr class=\"image-table-header\">";
+function buildTableFromData(tableArray, tableId){
+    var buildTable = `<table id=\"${tableId}\"><thead><tr class=\"image-table-header\">`;
     buildTable += `<th class="sorting"></th>`;
     buildTable += `<th class="sorting">Misspelling</th>`;
     buildTable += `<th class="sorting">Occurrences</th>`;
-    buildTable += "</tr></thead><tbody><tr>";
+    buildTable += `</tr></thead><tbody><tr>`;
 
     for(var i = 0; i < tableArray.length; i++){
         var value = tableArray[i].word;

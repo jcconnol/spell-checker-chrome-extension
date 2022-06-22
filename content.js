@@ -4,39 +4,49 @@
 
 chrome.runtime.onMessage.addListener(
     async function(request, sender, sendResponse) {
+        chrome.storage.sync.get([
+            "pageUnderline",
+            "includeAltText"
+        ], async function(result) {
+            var textString = document.body.innerText;
+            var textList = stringToUpperWordArray(textString);
+            var dictionaryURL = chrome.runtime.getURL("dictionary.json")
+            var imageArray = document.getElementsByTagName("img");
+            var imageAltTextArray = [];
+            var imageAltTextString = "";
 
-        var textString = document.body.innerText;
-        var textList = stringToUpperWordArray(textString);
-        var dictionaryURL = chrome.runtime.getURL("dictionary.json")
-        var imageArray = document.getElementsByTagName("img");
-        var imageAltTextArray = [];
-        var imageAltTextString = "";
+            var dictionaryJSON = await fetch(dictionaryURL)
+                .then((response) => response.json())
+                .then((json) => {return json});
+            
+            var showTable = true;
+            var showUnderline = false;
+            var includeAltText = result.includeAltText;
+        
+            var altTextString = "";
+            var wrongAltWordArray = [];
 
-        for(var i = 0; i < imageArray.length; i++){
-            var imageAltText = imageArray[i].alt;
-            if(imageAltText != ""){
-                imageAltTextString += " " + imageAltText;
+            if(includeAltText){
+                for(var i = 0; i < imageArray.length; i++){
+                    var imageAltText = imageArray[i].alt;
+                    if(imageAltText != ""){
+                        altTextString += " " + imageAltText;
+                    }
+                }
+
+                var altTextWordArray = stringToUpperWordArray(altTextString);
+                wrongAltWordArray = getWrongWordArray(altTextWordArray, dictionaryJSON);
             }
-        }
-
-        var dictionaryJSON = await fetch(dictionaryURL)
-            .then((response) => response.json())
-            .then((json) => {return json});
-        
-        // if(spellCheckAltText){
-
-        // }
-        var altTextWordArray = []
-        var textWordArray = stringToUpperWordArray(textString)
-        
-        var wrongAltWordArray = []
-        var wrongWordArray = getWrongWordArray(textWordArray, dictionaryJSON);
-       
-        chrome.runtime.sendMessage({ 
-            action: "show", 
-            pageText: wrongWordArray,
-            altText: wrongAltWordArray
-        });
+            
+            var textWordArray = stringToUpperWordArray(textString)
+            var wrongWordArray = getWrongWordArray(textWordArray, dictionaryJSON);
+            console.log(wrongAltWordArray)
+            chrome.runtime.sendMessage({ 
+                action: "show",
+                pageText: wrongWordArray,
+                altText: wrongAltWordArray
+            });
+        })
     }
 );
 
@@ -80,7 +90,6 @@ function arrayToOccurancesObj(duplicatesArray){
         });
     }
 
-    console.log(countsArray)
     return countsArray
 }
 
