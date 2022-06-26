@@ -1,11 +1,8 @@
-//TODO check alt text for spelling errors
-//TODO check for and remove numbers from array
-//TODO check if removing S makes it valid word
-
+//TODO future improvement - check if removing S makes it valid word
 chrome.runtime.onMessage.addListener(
     async function(request, sender, sendResponse) {
         chrome.storage.sync.get([
-            "pageUnderline",
+            "pageHighlight",
             "includeAltText"
         ], async function(result) {
             var textString = document.body.innerText;
@@ -20,7 +17,7 @@ chrome.runtime.onMessage.addListener(
                 .then((json) => {return json});
             
             var showTable = true;
-            var showUnderline = false;
+            var showHighlight = false;
             var includeAltText = result.includeAltText;
         
             var altTextString = "";
@@ -34,13 +31,14 @@ chrome.runtime.onMessage.addListener(
                     }
                 }
 
+                //TODO future improvement - compare upper but output normal case word
                 var altTextWordArray = stringToUpperWordArray(altTextString);
                 wrongAltWordArray = getWrongWordArray(altTextWordArray, dictionaryJSON);
             }
             
             var textWordArray = stringToUpperWordArray(textString)
             var wrongWordArray = getWrongWordArray(textWordArray, dictionaryJSON);
-            console.log(wrongAltWordArray)
+
             chrome.runtime.sendMessage({ 
                 action: "show",
                 pageText: wrongWordArray,

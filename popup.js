@@ -1,11 +1,13 @@
-//TODO make toggle to show on popup 
+
+//TODO make toggle to show on popup
 //TODO make toggle to highlight on page
 //TODO make to where person can add words to be excluded from dictionary
 
 var numericRegExp = new RegExp('^((?:NaN|-?(?:(?:\\d+|\\d*\\.\\d+)(?:[E|e][+|-]?\\d+)?|Infinity)))$')
 
 document.addEventListener('DOMContentLoaded', function() {
-    chrome.storage.sync.get(["pageObject"], async function(result) {
+    //TODO future improvement - save table string and set table to that text
+    chrome.storage.sync.get(["pageObject","showTable","pageHighlight","includeAltText"], async function(result) {
         var getSpellCheckButton = document.getElementsByClassName('run-spell-check-button')[0];
 
         var currentURL = null;
@@ -13,18 +15,19 @@ document.addEventListener('DOMContentLoaded', function() {
         chrome.tabs.query({active: true, currentWindow: true}, function(tabs){
             currentURL = tabs[0].url;
 
-            if(result.pageObject && currentURL == result.pageObject.url){
+            if(result && currentURL == result.pageObject.url){
                 if(result.pageObject.textArray.length > 0) {
                     var wordTable = buildTableFromData(result.pageObject.textArray, "spell-check-text-container");
                     document.getElementById("spell-check-text-container").innerHTML = wordTable;
                 }
 
-                if(result.pageObject.altText > 0) {
-                    var altTextTable = buildTableFromData(result.pageObject.altText, "spell-check-alt-container");
+                if(result.pageObject.altArray.length > 0 && result.includeAltText) {
+                    var altTextTable = buildTableFromData(result.pageObject.altArray, "spell-check-alt-container");
                     document.getElementById("spell-check-alt-container").innerHTML = altTextTable;
                 }
                 
-                initSortTable(document.querySelector('table'));
+                initSortTable(document.getElementById('spell-check-text-container'));
+                initSortTable(document.getElementById('spell-check-alt-container'));
                 getSpellCheckButton.disabled = false;
             }
         });
@@ -33,11 +36,11 @@ document.addEventListener('DOMContentLoaded', function() {
     //Settings storage retrieval
     chrome.storage.sync.get([
         "showTable",
-        "pageUnderline",
+        "pageHighlight",
         "includeAltText"
     ], function(items){
-        document.getElementsByClassName('show-table')[0].checked = items.showTable;
-        document.getElementsByClassName('page-underline')[0].checked = items.pageUnderline;
+        //document.getElementsByClassName('show-table')[0].checked = items.showTable;
+        //document.getElementsByClassName('page-highlight')[0].checked = items.pageHighlight;
         document.getElementsByClassName('include-alt-text')[0].checked = items.includeAltText;
     });
 
@@ -52,8 +55,8 @@ document.addEventListener('DOMContentLoaded', function() {
         else if(inputClicked.matches(".include-alt-text")){
             key = "includeAltText";
         }
-        else if(inputClicked.matches(".page-underline")){
-            key = "pageUnderline";
+        else if(inputClicked.matches(".page-highlight")){
+            key = "pageHighlight";
         }
         
         if(key){
@@ -104,16 +107,12 @@ chrome.runtime.onMessage.addListener(
                 progressBar.innerHTML = progressWidth * 1  + '%';
             }
 
-            //TODO add if for altTextData
             var sortedTextData = textData.sort();
             var sortedAltData = altTextData.sort();
-
-            console.log(sortedAltData)
 
             await chrome.tabs.query({active: true, currentWindow: true}, async function(tabs){   
                 var currentURL = tabs[0].url;
                 
-                //TODO add if for altTextData
                 var pageObject = {
                     "textArray": sortedTextData,
                     "altArray": sortedAltData,
@@ -121,17 +120,19 @@ chrome.runtime.onMessage.addListener(
                 }
 
                 chrome.storage.sync.set({"pageObject": pageObject}, function() {
-                    //add altText get and make another table
+
                     var wordTable = buildTableFromData(sortedTextData, "spell-check-text-container");
                     document.getElementById("spell-check-text-container").innerHTML = wordTable;
-                    console.log(sortedAltData)
+
                     if(sortedAltData.length > 0){
                         var altWordTable = buildTableFromData(sortedAltData, "spell-check-alt-container");
                         document.getElementById("spell-check-alt-container").innerHTML = altWordTable;
                         document.getElementById("spell-check-alt-container").style.display = "block";
+                        document.getElementsByClassName("page-alt-table-header").text = "block";
                     }
                     else{
                         document.getElementById("spell-check-alt-container").style.display = "none";
+                        document.getElementsByClassName("page-alt-table-header").text = "none";
                     }
 
                     initSortTable(document.getElementById('spell-check-text-container'));

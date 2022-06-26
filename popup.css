@@ -127,6 +127,13 @@ table {
   margin: 0 10px 0 10px;
 }
 
+.page-alt-table-header,
+.page-text-table-header {
+  font-family: arial, sans-serif;
+  margin: 0 10px 0 10px;
+  font-weight: 550;
+}
+
 td, th {
   border: 1px solid #dddddd;
   text-align: left;
