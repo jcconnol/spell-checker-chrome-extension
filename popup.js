@@ -4,7 +4,12 @@
 
 var numericRegExp = new RegExp('^((?:NaN|-?(?:(?:\\d+|\\d*\\.\\d+)(?:[E|e][+|-]?\\d+)?|Infinity)))$')
 
+const TEXT_TABLE_HEADER = "Text Misspelled"
+const ALT_TEXT_TABLE_HEADER = "Alt Text Misspelled"
+
 document.addEventListener('DOMContentLoaded', function() {
+    document.querySelector(".page-text-table-header").innerText = " "
+    document.querySelector(".page-alt-table-header").innerText = " "
     //TODO future improvement - save table string and set table to that text
     chrome.storage.sync.get(["pageObject","showTable","pageHighlight","includeAltText"], async function(result) {
         var getSpellCheckButton = document.getElementsByClassName('run-spell-check-button')[0];
@@ -18,11 +23,19 @@ document.addEventListener('DOMContentLoaded', function() {
                 if(result.pageObject.textArray.length > 0) {
                     var wordTable = buildTableFromData(result.pageObject.textArray, "spell-check-text-container");
                     document.getElementById("spell-check-text-container").innerHTML = wordTable;
+                    document.querySelector(".page-text-table-header").innerText = TEXT_TABLE_HEADER
+                }
+                else {
+                    document.querySelector(".page-text-table-header").innerText = ""
                 }
 
                 if(result.pageObject.altArray.length > 0 && result.includeAltText) {
                     var altTextTable = buildTableFromData(result.pageObject.altArray, "spell-check-alt-container");
                     document.getElementById("spell-check-alt-container").innerHTML = altTextTable;
+                    document.querySelector(".page-alt-table-header").innerText = ALT_TEXT_TABLE_HEADER
+                }
+                else {
+                    document.querySelector(".page-alt-table-header").innerText = ""
                 }
                 
                 initSortTable(document.getElementById('spell-check-text-container'));
@@ -119,18 +132,18 @@ chrome.runtime.onMessage.addListener(
 
                 chrome.storage.sync.set({"pageObject": pageObject}, function() {
 
+                    document.querySelector(".page-text-table-header").innerText = TEXT_TABLE_HEADER;
+
                     var wordTable = buildTableFromData(sortedTextData, "spell-check-text-container");
                     document.getElementById("spell-check-text-container").innerHTML = wordTable;
 
                     if(sortedAltData.length > 0){
                         var altWordTable = buildTableFromData(sortedAltData, "spell-check-alt-container");
                         document.getElementById("spell-check-alt-container").innerHTML = altWordTable;
-                        document.getElementById("spell-check-alt-container").style.display = "block";
-                        document.getElementsByClassName("page-alt-table-header").text = "block";
+                        document.querySelector(".page-alt-table-header").innerText = ALT_TEXT_TABLE_HEADER;
                     }
                     else{
-                        document.getElementById("spell-check-alt-container").style.display = "none";
-                        document.getElementsByClassName("page-alt-table-header").text = "none";
+                        document.querySelector(".page-alt-table-header").innerText = "";
                     }
 
                     initSortTable(document.getElementById('spell-check-text-container'));
