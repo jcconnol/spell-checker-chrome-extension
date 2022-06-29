@@ -1,5 +1,4 @@
 
-//TODO make toggle to show on popup
 //TODO make toggle to highlight on page
 //TODO make to where person can add words to be excluded from dictionary
 
@@ -39,8 +38,7 @@ document.addEventListener('DOMContentLoaded', function() {
         "pageHighlight",
         "includeAltText"
     ], function(items){
-        //document.getElementsByClassName('show-table')[0].checked = items.showTable;
-        //document.getElementsByClassName('page-highlight')[0].checked = items.pageHighlight;
+        document.getElementsByClassName('page-highlight')[0].checked = items.pageHighlight;
         document.getElementsByClassName('include-alt-text')[0].checked = items.includeAltText;
     });
 
@@ -174,12 +172,12 @@ function buildTableFromData(tableArray, tableId){
     buildTable += `</tr></thead><tbody><tr>`;
 
     for(var i = 0; i < tableArray.length; i++){
-        var value = tableArray[i].word;
-        var occurance = tableArray[i].count; 
+        var value = tableArray[i].original;
+        var occurrence = tableArray[i].count; 
 
         buildTable += `<td>${i+1}</td>`;
         buildTable += `<td>${value}</td>`;
-        buildTable += `<td>${occurance}</td>`;
+        buildTable += `<td>${occurrence}</td>`;
 
         if ((i+1) < buildTable.length) { 
             buildTable += "</tr><tr>";
@@ -257,14 +255,6 @@ function sortTable (table, ordering) {
             if(!b.cells[order.idx]){
                 break;
             }
-
-            // if(!('textContent' in a.cells[order.idx])){
-            //     break;
-            // }
-
-            // if(!('textContent' in b.cells[order.idx])){
-            //     break;
-            // }
             
             aText = a.cells[order.idx].textContent
             bText = b.cells[order.idx].textContent

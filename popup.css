@@ -122,13 +122,25 @@ footer hr{
   width: 100%;
 }
 
+.setting {
+  text-align: center;
+  width: 50%;
+  float: right;
+  padding-bottom: 25px;
+}
+
 table {
   font-family: arial, sans-serif;
-  margin: 0 10px 0 10px;
+  margin: 0px auto 40px auto;
+}
+
+.sorting:nth-child(2) {
+  min-width: 130px;
 }
 
 .page-alt-table-header,
 .page-text-table-header {
+  text-align: center;
   font-family: arial, sans-serif;
   margin: 0 10px 0 10px;
   font-weight: 550;

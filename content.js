@@ -16,8 +16,7 @@ chrome.runtime.onMessage.addListener(
                 .then((response) => response.json())
                 .then((json) => {return json});
             
-            var showTable = true;
-            var showHighlight = false;
+            var showHighlight = result.pageHighlight;
             var includeAltText = result.includeAltText;
         
             var altTextString = "";
@@ -31,13 +30,21 @@ chrome.runtime.onMessage.addListener(
                     }
                 }
 
-                //TODO future improvement - compare upper but output normal case word
                 var altTextWordArray = stringToUpperWordArray(altTextString);
                 wrongAltWordArray = getWrongWordArray(altTextWordArray, dictionaryJSON);
             }
             
-            var textWordArray = stringToUpperWordArray(textString)
+            var textWordArray = stringToUpperWordArray(textString);
             var wrongWordArray = getWrongWordArray(textWordArray, dictionaryJSON);
+
+            if(showHighlight){
+                for(var i = 0; i<wrongWordArray; i++){
+                    let text = document.body.innerHTML;
+                    let re = new RegExp(wrongWordArray[i].original,"g"); // search for all instances
+                    let newText = text.replace(re, `<mark>${wrongWordArray[i]}</mark>`);
+                    document.body.innerHTML = newText;
+                }
+            }
 
             chrome.runtime.sendMessage({ 
                 action: "show",
@@ -52,7 +59,10 @@ function stringToUpperWordArray(incoming_string){
     var stringArray = incoming_string.match(/\b(\w+)\b/g);
 
     for(var i = 0; i < stringArray.length; i++){
-        stringArray[i] = stringArray[i].toUpperCase()
+        stringArray[i] = {
+            upper: stringArray[i].toUpperCase(),
+            original: stringArray[i]
+        }
     }
 
     return stringArray
@@ -61,7 +71,7 @@ function stringToUpperWordArray(incoming_string){
 function getWrongWordArray(wordArray, dictionary){
     var wrongWordArray = []
     for(var i = 0; i < wordArray.length; i++){
-        if(dictionary[wordArray[i]] != "1" && !hasNum(wordArray[i])){
+        if(dictionary[wordArray[i].upper] != "1" && !hasNum(wordArray[i].upper)){
             wrongWordArray.push(wordArray[i])
         }
     }
@@ -73,17 +83,21 @@ function getWrongWordArray(wordArray, dictionary){
 
 function arrayToOccurancesObj(duplicatesArray){
     // [what, what] To [{what:2}]
-
     var countsObj = {};
+    var capitalObj = {};
 
     for (var num of duplicatesArray) {
-        countsObj[num] = countsObj[num] ? countsObj[num] + 1 : 1;
+        var upper = num.upper;
+        var original = num.original;
+        capitalObj[upper] = original;
+        countsObj[upper] = countsObj[upper] ? countsObj[upper] + 1 : 1;
     }
 
     var countsArray = [];
-    for (var key in countsObj) {
+    for(var key in countsObj) {
         countsArray.push({
-            "word": key,
+            "upper": key,
+            "original": capitalObj[key],
             "count": countsObj[key]
         });
     }
