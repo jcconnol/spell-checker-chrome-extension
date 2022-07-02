@@ -137,6 +137,11 @@ table {
   margin: 0px auto 40px auto;
 }
 
+#spell-check-text-container,
+#spell-check-alt-container {
+  text-align: center;
+}
+
 .sorting:nth-child(2) {
   min-width: 130px;
 }

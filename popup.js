@@ -8,8 +8,8 @@ const TEXT_TABLE_HEADER = "Text Misspelled"
 const ALT_TEXT_TABLE_HEADER = "Alt Text Misspelled"
 
 document.addEventListener('DOMContentLoaded', function() {
-    document.querySelector(".page-text-table-header").innerText = " "
-    document.querySelector(".page-alt-table-header").innerText = " "
+    document.querySelector(".page-text-table-header").innerText = " ";
+    document.querySelector(".page-alt-table-header").innerText = " ";
     //TODO future improvement - save table string and set table to that text
     chrome.storage.sync.get(["pageObject","showTable","pageHighlight","includeAltText"], async function(result) {
         var getSpellCheckButton = document.getElementsByClassName('run-spell-check-button')[0];
@@ -18,34 +18,35 @@ document.addEventListener('DOMContentLoaded', function() {
 
         chrome.tabs.query({active: true, currentWindow: true}, function(tabs){
             currentURL = tabs[0].url;
-
+            
             if(result && currentURL == result.pageObject.url){
+                document.querySelector(".page-text-table-header").innerText = TEXT_TABLE_HEADER
                 if(result.pageObject.textArray.length > 0) {
                     var wordTable = buildTableFromData(result.pageObject.textArray, "spell-check-text-container");
                     document.getElementById("spell-check-text-container").innerHTML = wordTable;
-                    document.querySelector(".page-text-table-header").innerText = TEXT_TABLE_HEADER
+                    initSortTable(document.getElementById('spell-check-text-container'));
                 }
                 else {
-                    document.querySelector(".page-text-table-header").innerText = ""
-                }
-
-                if(result.pageObject.altArray.length > 0 && result.includeAltText) {
-                    var altTextTable = buildTableFromData(result.pageObject.altArray, "spell-check-alt-container");
-                    document.getElementById("spell-check-alt-container").innerHTML = altTextTable;
-                    document.querySelector(".page-alt-table-header").innerText = ALT_TEXT_TABLE_HEADER
-                }
-                else {
-                    document.querySelector(".page-alt-table-header").innerText = ""
+                    document.querySelector("#spell-check-text-container").innerText = "No Misspellings found."
                 }
                 
-                initSortTable(document.getElementById('spell-check-text-container'));
-                initSortTable(document.getElementById('spell-check-alt-container'));
+                if(result.includeAltText){
+                    document.querySelector(".page-alt-table-header").innerText = ALT_TEXT_TABLE_HEADER
+                    if(result.pageObject.altArray.length > 0) {
+                        var altTextTable = buildTableFromData(result.pageObject.altArray, "spell-check-alt-container");
+                        document.getElementById("spell-check-alt-container").innerHTML = altTextTable;
+                        initSortTable(document.getElementById('spell-check-alt-container'));
+                    }
+                    else {
+                        document.querySelector("#spell-check-alt-container").innerText = "No Misspellings found."
+                    }
+                }
+                
                 getSpellCheckButton.disabled = false;
             }
         });
     });
 
-    //Settings storage retrieval
     chrome.storage.sync.get([
         "showTable",
         "pageHighlight",
@@ -56,9 +57,10 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     $('.switch #setting-switch').click(function(event) {
+        
         var inputClicked = event.target;
         var key = null;
-        var value = event.target.checked;    
+        var value = event.target.checked;
 
         if(inputClicked.matches(".show-table")){
             key = "showTable";
@@ -293,7 +295,8 @@ function find (array, predicate) {
 }
 
 function initSortTable (table) {
-    var thead = table.querySelector('thead')
+    var thead = table.querySelector('thead');
+
     var ordering = [{idx:2,dir:'asc'},{idx:1,dir:'asc'}]
     
     table.__ordering = ordering

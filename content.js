@@ -38,11 +38,12 @@ chrome.runtime.onMessage.addListener(
             var wrongWordArray = getWrongWordArray(textWordArray, dictionaryJSON);
 
             if(showHighlight){
-                for(var i = 0; i<wrongWordArray; i++){
-                    let text = document.body.innerHTML;
-                    let re = new RegExp(wrongWordArray[i].original,"g"); // search for all instances
-                    let newText = text.replace(re, `<mark>${wrongWordArray[i]}</mark>`);
-                    document.body.innerHTML = newText;
+                for(var i = 0; i < wrongWordArray.length; i++){
+                    let text = document.evaluate(`//*[contains(text(), '${wrongWordArray[i].original}')]`,
+                            document, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE).snapshotItem(0).innerText;
+                    let re = new RegExp(wrongWordArray[i].original,"g");
+                    let newText = text.replace(re, `<mark>${wrongWordArray[i].upper}</mark>`);
+                    document.evaluate(`//*[contains(text(), '${wrongWordArray[i].original}')]`, document, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE).snapshotItem(0).innerHTML = newText;
                 }
             }
 
